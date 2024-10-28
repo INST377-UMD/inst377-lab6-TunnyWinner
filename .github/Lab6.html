@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+            * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        #map-container {
+            width: 80%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #map {
+            height: 500px;
+            border-radius: 8px;
+            border: 2px solid #ddd;
+        }
+
+        .info {
+            width: 80%;
+            max-width: 800px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .marker-info {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #e1e1e1;
+            border-radius: 5px;
+        }
+
+        .marker-info strong {
+            color: #333;
+        }
+
+        .marker-info span {
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interactive US Map with Random Markers</h1>
+
+    <div id="map-container">
+        <div id="map"></div>
+    </div>
+
+    <div class="info" id="coordinates-info">
+        <h2>Marker Details</h2>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        
+        const map = L.map('map').setView([37.0902, -95.7129], 4); // Centered on the US
+
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        
+        function getRandomInRange(from, to, fixed) {
+            return (Math.random() * (to - from) + from).toFixed(fixed) * 1;
+        }
+
+        
+        const coordinates = [
+            { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+            { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) },
+            { lat: getRandomInRange(30, 35, 3), lng: getRandomInRange(-90, -100, 3) }
+        ];
+
+        
+        const infoDiv = document.getElementById('coordinates-info');
+
+        coordinates.forEach(async (coord, index) => {
+           
+            const marker = L.marker([coord.lat, coord.lng]).addTo(map);
+
+            
+            const apiUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${coord.lat}&longitude=${coord.lng}&localityLanguage=en`;
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                
+                const locality = data.locality || 'Locality not found';
+
+                
+                infoDiv.innerHTML += `
+                    <div class="marker-info">
+                        <p><strong>Marker ${index + 1}:</strong></p>
+                        <p><span>Latitude:</span> ${coord.lat}</p>
+                        <p><span>Longitude:</span> ${coord.lng}</p>
+                        <p><span>Locality:</span> ${locality}</p>
+                    </div>
+                `;
+            } catch (error) {
+                console.error("Error fetching locality data:", error);
+                infoDiv.innerHTML += `
+                    <div class="marker-info">
+                        <p><strong>Marker ${index + 1}:</strong></p>
+                        <p><span>Latitude:</span> ${coord.lat}</p>
+                        <p><span>Longitude:</span> ${coord.lng}</p>
+                        <p><span>Locality:</span> Error fetching data</p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
